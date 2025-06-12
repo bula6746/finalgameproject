@@ -1,15 +1,17 @@
 import random #random module
 from collections import defaultdict #for the use of items with a list as its value
 import time #for a smooth touch
-import pygame 
+import pygame #music
 
-#who doesnt love gambling 
+
+#took roughly 14 - 18 hours to make??
 
 #score stuff
 wins = 0
 loses = 0
 streak = 0
 blackjacks = 0
+draws = 0
 
 #dealers and users digital hand
 DealersHand = {}
@@ -38,24 +40,41 @@ UsersBest = 0
 DealersValue = 0
 DealersBest = 0
 
+#wooohooo blackjack!!!11!1! 
+BlackjackTheme = False
+
 #digital deck of cards (52 cards total)
-CardDeck ={"♣️ Two": 2, "♣️ Three": 3, "♣️ Four": 4, "♣️ Five": 5, "♣️ Six": 6, "♣️ Seven": 7, "♣️ Eight": 8, "♣️ Nine": 9, "♣️ Ten": 10, "♣️ Jack": [10, "Pic"], "♣️ Queen": [10, "Pic"], "♣️ King": [10, "Pic"], "♣️ Ace": [1,11], 
-           "♦️ Two": 2, "♦️ Three": 3, "♦️ Four": 4, "♦️ Five": 5, "♦️ Six": 6, "♦️ Seven": 7, "♦️ Eight": 8, "♦️ Nine": 9, "♦️ Ten": 10, "♦️ Jack": [10, "Pic"], "♦️ Queen": [10, "Pic"], "♦️ King": [10, "Pic"], "♦️ Ace": [1,11], 
-           "♠️ Two": 2, "♠️ Three": 3, "♠️ Four": 4, "♠️ Five": 5, "♠️ Six": 6, "♠️ Seven": 7, "♠️ Eight": 8, "♠️ Nine": 9, "♠️ Ten": 10, "♠️ Jack": [10, "Pic"], "♠️ Queen": [10, "Pic"], "♠️ King": [10, "Pic"], "♠️ Ace": [1,11], 
-           "♥️ Two": 2, "♥️ Three": 3, "♥️ Four": 4, "♥️ Five": 5, "♥️ Six": 6, "♥️ Seven": 7, "♥️ Eight": 8, "♥️ Nine": 9, "♥️ Ten": 10, "♥️ Jack": [10, "Pic"], "♥️ Queen": [10, "Pic"], "♥️ King": [10, "Pic"], "♥️ Ace": [1,11]}
+CardDeck ={"♣️ Two": 2, "♣️ Three": 3, "♣️ Four": 4, "♣️ Five": 5, "♣️ Six": 6, "♣️ Seven": 7, "♣️ Eight": 8, "♣️ Nine": 9, "♣️ Ten": 10, "♣️ Jack": [10, "Face"], "♣️ Queen": [10, "Face"], "♣️ King": [10, "Face"], "♣️ Ace": [1,11], 
+           "♦️ Two": 2, "♦️ Three": 3, "♦️ Four": 4, "♦️ Five": 5, "♦️ Six": 6, "♦️ Seven": 7, "♦️ Eight": 8, "♦️ Nine": 9, "♦️ Ten": 10, "♦️ Jack": [10, "Face"], "♦️ Queen": [10, "Face"], "♦️ King": [10, "Face"], "♦️ Ace": [1,11], 
+           "♠️ Two": 2, "♠️ Three": 3, "♠️ Four": 4, "♠️ Five": 5, "♠️ Six": 6, "♠️ Seven": 7, "♠️ Eight": 8, "♠️ Nine": 9, "♠️ Ten": 10, "♠️ Jack": [10, "Face"], "♠️ Queen": [10, "Face"], "♠️ King": [10, "Face"], "♠️ Ace": [1,11], 
+           "♥️ Two": 2, "♥️ Three": 3, "♥️ Four": 4, "♥️ Five": 5, "♥️ Six": 6, "♥️ Seven": 7, "♥️ Eight": 8, "♥️ Nine": 9, "♥️ Ten": 10, "♥️ Jack": [10, "Face"], "♥️ Queen": [10, "Face"], "♥️ King": [10, "Face"], "♥️ Ace": [1,11]}
+
+music = "Luigi's Casino - New Super Mario Bros." #regular music
+
+def PlayMusic():
+    global BlackjackTheme
+    global music
+    pygame.mixer.init()
+
+    if UserBlackjack == True and BlackjackTheme == False:
+        music = "Double Down - Sonic Lost World [OST] 4" #blackjack msuic
+        BlackjackTheme = True
+
+    pygame.mixer.music.load(music + ".mp3")
+    pygame.mixer.music.play(-1)
 
 def Rules():
     print()
     print("Rules:")
     print("All Blackjack games have vague and wierd dealer rules. Here are the rules that applies here:")
     print()
-    print("1. Any picture cards (exluding 10 cards) that are and paired with an ACE is a blackjack.")
-    print("2. Dealers MUST deal if their value is below 17, regardless if you have less than them")
-    print("3. If you and the dealer are tied and both if your values are above 17, dealer will always win ties unless you have Blackjack.")
+    print("1. Any face cards (exluding 10 cards) that are and paired with an ACE is a blackjack.")
+    print("2. Dealers WILL deal if their value or best value is below 17 (17 RULE), even if you have less than them")
+    print("3. If you and the dealer are tied and both if your values are above 17, dealer will always win ties unless you have Blackjack")
     print("4. If the dealers value or best value is above 17, they cannot deal anymore.")
     print()
     print("⭐ - Perfect Hand (21)")
-    print("👑 - Blackjack! (ACE + Picture card)")
+    print("👑 - Blackjack! (ACE + Face card)")
     print("❌ - Your best hand cannot be used (>21)")
     print("💥 - Bust!")
     print()
@@ -72,23 +91,23 @@ def DealCards(): #Cards are being delt
         DealersHand.update({card: value})
         del CardDeck[card]
 
-        # card, value = random.choice(list(CardDeck.items()))
-        # UsersHand.update({card: value})
-        # del CardDeck[card]
+        card, value = random.choice(list(CardDeck.items()))
+        UsersHand.update({card: value})
+        del CardDeck[card]
     
     #-------------------------------manual debugging below thanks chatgbt <3---------------------------------
 
-    for card in list(CardDeck.keys()):
-        if "Ace" in card:
-            UsersHand[card] = CardDeck[card]
-            del CardDeck[card]
-            break
+    # for card in list(CardDeck.keys()):
+    #     if "Ace" in card:
+    #         UsersHand[card] = CardDeck[card]
+    #         del CardDeck[card]
+    #         break
 
-    for card in list(CardDeck.keys()):
-        if "King" in card:
-            UsersHand[card] = CardDeck[card]
-            del CardDeck[card]
-            break
+    # for card in list(CardDeck.keys()):
+    #     if "King" in card:
+    #         UsersHand[card] = CardDeck[card]
+    #         del CardDeck[card]
+    #         break
 
 
 def CalculateUsersValues(): #Values of all cards are calculated; only used once
@@ -96,13 +115,13 @@ def CalculateUsersValues(): #Values of all cards are calculated; only used once
     global UsersValue
     global UsersBest
     for card, value in UsersHand.items():
-        if isinstance(value, list): #Checks if it is either an ACE or a picture card
+        if isinstance(value, list): #Checks if it is either an ACE or a Face card
             item = value[1]
             if item == 11: #Checks if it is an ACE, if so, UsersAce is true
                 UsersAce = True
                 UsersValue += value[0]
                 UsersBest += value[1]
-            elif item == "Pic": #Checks if it is a picture card
+            elif item == "Face": #Checks if it is a Face card
                 UsersValue += value[0]
                 UsersBest += value[0]
         else:
@@ -118,13 +137,13 @@ def DealerHit(): #the dealer hits
     DealersHand.update({card: value})
     del CardDeck[card]
 
-    if isinstance(value, list): #Checks if it is either an ACE or a picture card
+    if isinstance(value, list): #Checks if it is either an ACE or a Face card
         item = value[1]
         if item == 11: #Checks if it is an ACE, if so, UsersAce is true
             DealersAce = True
             DealersValue += value[0]
             DealersBest += value[1]
-        elif item == "Pic": #Checks if it is a picture card
+        elif item == "Face": #Checks if it is a Face card
             DealersValue += value[0]
             DealersBest += value[0]
     else:
@@ -146,7 +165,7 @@ def HitCard(): #the user hits
                 UsersAce = True
                 UsersValue += value[0]
                 UsersBest += value[1]
-            elif item == "Pic": #Checks if it is a picture card
+            elif item == "Face": #Checks if it is a picture card
                 UsersValue += value[0]
                 UsersBest += value[0]
     else:
@@ -165,7 +184,7 @@ def DealerCalculateCards(): #calculatrs the dealers hand
                 DealersAce = True
                 DealersValue += value[0]
                 DealersBest += value[1]
-            elif item == "Pic": #Checks if it is a picture card
+            elif item == "Face": #Checks if it is a picture card
                 DealersValue += value[0]
                 DealersBest += value[0]
         else:
@@ -174,10 +193,12 @@ def DealerCalculateCards(): #calculatrs the dealers hand
 
 def DealerNowShallDeal(): #starts the dealer to deal
     if UserBlackjack == True:
-        time.sleep(2)
+        time.sleep(1)
+        PlayMusic()
+        time.sleep(1)
         print()
         print("You got a Blackjack!")
-        print("Standing. The dealer reveals his folded card")
+        print("Dealer will now deal his cards")
         print()
         time.sleep(2)
     BlackjackDisplay = ""
@@ -202,6 +223,17 @@ def DealerNowShallDeal(): #starts the dealer to deal
     PlayBlackjack()
 
 def anotherRound(): #play again?
+    print()
+    print(f"👑 Wins: {wins}")
+    print(f"💔 Loses: {loses}")
+    print(f"🔥 Streak: {streak}")
+    print(f"🃏 Blackjacks: {blackjacks}")
+    print(f"🤝 Draws: {draws}")
+    print()
+    print("Play again? Type Y")
+    playAgain()
+
+def playAgain():
     global DealersAce
     global UsersAce
     global UserBlackjack
@@ -215,15 +247,10 @@ def anotherRound(): #play again?
     global wins
     global loses
     global UsersBestBust
+    global draws
 
-    print()
-    print(f"👑 Wins: {wins}")
-    print(f"💔 Loses: {loses}")
-    print(f"🔥 Streak: {streak}")
-    print(f"🃏 Blackjacks: {blackjacks}")
-    print()
-    print("Play again? Type Y")
-    if input().upper() == "Y":
+    choice = input().upper()
+    if choice == "Y":
         print()
         print()
         print()
@@ -262,6 +289,9 @@ def anotherRound(): #play again?
         DealCards()
         CalculateUsersValues()
         PlayBlackjack()
+    else:
+        print("Invalid Input. Try again.")
+        playAgain()
         
 
 def WhatWouldYouDo(): #choose
@@ -270,6 +300,7 @@ def WhatWouldYouDo(): #choose
 
 def AskUser():
     global DealersTurn
+
     UserChoice = input().upper()
     if UserChoice == "H":
         HitCard()
@@ -332,6 +363,8 @@ def CheckValues(check, x): #score
     if x == "l":
         loses += 1
         streak = 0
+    if x == "p":
+        drwas += 1
     if x == "w" and UserBlackjack == True:
         blackjacks += 1
     time.sleep(1.5)
@@ -631,6 +664,7 @@ def StartTheGame():
     else:
         print("Type the key X to start")
         StartTheGame()
+PlayMusic()
 print()
 print()
 print("Welcome to Python Blackjack!")
@@ -643,4 +677,8 @@ print()
 print()
 print("RECOMMENDED: Type R for rules")
 print("Type X to play!")
+
+
+
 StartTheGame()
+
